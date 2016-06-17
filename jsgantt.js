@@ -202,6 +202,7 @@ JSGantt.TaskItem=function(pID, pName, pStart, pEnd, pClass, pLink, pMile, pRes, 
 			var vUnits=null;
 			switch(pFormat)
 			{
+                case 'hour': vUnits='minute'; break;
 				case 'week':  vUnits='day'; break;
 				case 'month':  vUnits='week'; break;
 				case 'quarter': vUnits='month'; break;
@@ -216,6 +217,7 @@ JSGantt.TaskItem=function(pID, pName, pStart, pEnd, pClass, pLink, pMile, pRes, 
 			if(Math.floor(tmpPer)!=tmpPer) tmpPer=Math.round(tmpPer*10)/10;
 			switch(vUnits)
 			{
+                case 'minute': vDuration=tmpPer+' '+((tmpPer!=1)?pLang['mins']:pLang['min']); break;
 				case 'hour': vDuration=tmpPer+' '+((tmpPer!=1)?pLang['hrs']:pLang['hr']); break;
 				case 'day': vDuration=tmpPer+' '+((tmpPer!=1)?pLang['dys']:pLang['dy']); break;
 				case 'week': vDuration=tmpPer+' '+((tmpPer!=1)?pLang['wks']:pLang['wk']); break;
@@ -270,7 +272,7 @@ JSGantt.TaskItem=function(pID, pName, pStart, pEnd, pClass, pLink, pMile, pRes, 
 
 // function that loads the main gantt chart properties and functions
 // pDiv: (required) this is a div object created in HTML
-// pFormat: (required) - used to indicate whether chart should be drawn in "hour", "day", "week", "month", or "quarter" format
+// pFormat: (required) - used to indicate whether chart should be drawn in "minute","hour", "day", "week", "month", or "quarter" format
 JSGantt.GanttChart=function(pDiv, pFormat)
 {
 	var vDiv=pDiv;
@@ -300,6 +302,8 @@ JSGantt.GanttChart=function(pDiv, pFormat)
 	var vDateInputFormat='yyyy-mm-dd';
 	var vDateTaskTableDisplayFormat=JSGantt.parseDateFormatStr('dd/mm/yyyy');
 	var vDateTaskDisplayFormat=JSGantt.parseDateFormatStr('dd month yyyy');
+    var vMinuteMajorDateDisplayFormat=JSGantt.parseDateFormatStr('dd/mm/yyyy HH:--');
+	var vMinuteMinorDateDisplayFormat=JSGantt.parseDateFormatStr('MI');
 	var vHourMajorDateDisplayFormat=JSGantt.parseDateFormatStr('day dd month yyyy');
 	var vHourMinorDateDisplayFormat=JSGantt.parseDateFormatStr('HH');
 	var vDayMajorDateDisplayFormat=JSGantt.parseDateFormatStr('dd/mm/yyyy');
@@ -314,12 +318,13 @@ JSGantt.GanttChart=function(pDiv, pFormat)
 	var vCaptionType;
 	var vDepId=1;
 	var vTaskList=new Array();
-	var vFormatArr=new Array('hour','day','week','month','quarter');
+	var vFormatArr=new Array('minute','hour','day','week','month','quarter');
 	var vMonthDaysArr=new Array(31,28,31,30,31,30,31,31,30,31,30,31);
 	var vProcessNeeded=true;
 	var vMinGpLen=8;
 	var vScrollTo='';
-	var vHourColWidth=18;
+	var vMinuteColWidth=18;
+    var vHourColWidth=18;
 	var vDayColWidth=18;
 	var vWeekColWidth=36;
 	var vMonthColWidth=36;
@@ -327,8 +332,8 @@ JSGantt.GanttChart=function(pDiv, pFormat)
 	var vRowHeight=20;
 	var vTodayPx=-1;
 	var vLangs={'en':
-			{'format':'Format','hour':'Hour','day':'Day','week':'Week','month':'Month','quarter':'Quarter','hours':'Hours','days':'Days',
-			 'weeks':'Weeks','months':'Months','quarters':'Quarters','hr':'Hr','dy':'Day','wk':'Wk','mth':'Mth','qtr':'Qtr','hrs':'Hrs',
+			{'format':'Format','minute':'Minute','hour':'Hour','day':'Day','week':'Week','month':'Month','quarter':'Quarter','hours':'Hours','days':'Days',
+			 'weeks':'Weeks','months':'Months','quarters':'Quarters','min':'min','hr':'Hr','dy':'Day','wk':'Wk','mth':'Mth','qtr':'Qtr','hrs':'Hrs',
 			 'dys':'Days','wks':'Wks','mths':'Mths','qtrs':'Qtrs','resource':'Resource','duration':'Duration','comp':'% Comp.',
 			 'completion':'Completion','startdate':'Start Date','enddate':'End Date','moreinfo':'More Information','notes':'Notes',
 			 'january':'January','february':'February','march':'March','april':'April','maylong':'May','june':'June','july':'July',
@@ -353,7 +358,7 @@ JSGantt.GanttChart=function(pDiv, pFormat)
 	this.setUseSingleCell=function(pVal){vUseSingleCell=pVal*1;};
 	this.setFormatArr=function()
 	{
-		var vValidFormats='hour day week month quarter';
+		var vValidFormats='minute hour day week month quarter';
 		vFormatArr=new Array();
 		for(var i=0, j=0; i<arguments.length; i++)
 		{
@@ -396,7 +401,9 @@ JSGantt.GanttChart=function(pDiv, pFormat)
 	this.setDateInputFormat=function(pVal){vDateInputFormat=pVal;};
 	this.setDateTaskTableDisplayFormat=function(pVal){vDateTaskTableDisplayFormat=JSGantt.parseDateFormatStr(pVal);};
 	this.setDateTaskDisplayFormat=function(pVal){vDateTaskDisplayFormat=JSGantt.parseDateFormatStr(pVal);};
-	this.setHourMajorDateDisplayFormat=function(pVal){vHourMajorDateDisplayFormat=JSGantt.parseDateFormatStr(pVal);};
+	this.setMinuteMajorDateDisplayFormat=function(pVal){vMinuteMajorDateDisplayFormat=JSGantt.parseDateFormatStr(pVal);};
+	this.setMinuteMinorDateDisplayFormat=function(pVal){vMinuteMinorDateDisplayFormat=JSGantt.parseDateFormatStr(pVal);};
+    this.setHourMajorDateDisplayFormat=function(pVal){vHourMajorDateDisplayFormat=JSGantt.parseDateFormatStr(pVal);};
 	this.setHourMinorDateDisplayFormat=function(pVal){vHourMinorDateDisplayFormat=JSGantt.parseDateFormatStr(pVal);};
 	this.setDayMajorDateDisplayFormat=function(pVal){vDayMajorDateDisplayFormat=JSGantt.parseDateFormatStr(pVal);};
 	this.setDayMinorDateDisplayFormat=function(pVal){vDayMinorDateDisplayFormat=JSGantt.parseDateFormatStr(pVal);};
@@ -414,7 +421,8 @@ JSGantt.GanttChart=function(pDiv, pFormat)
 	};
 	this.setMinGpLen=function(pMinGpLen){vMinGpLen=pMinGpLen;};
 	this.setScrollTo=function(pDate){vScrollTo=pDate;};
-	this.setHourColWidth=function(pWidth){vHourColWidth=pWidth;};
+	this.setMinuteColWidth=function(pWidth){vMinuteColWidth=pWidth;};
+    this.setHourColWidth=function(pWidth){vHourColWidth=pWidth;};
 	this.setDayColWidth=function(pWidth){vDayColWidth=pWidth;};
 	this.setWeekColWidth=function(pWidth){vWeekColWidth=pWidth;};
 	this.setMonthColWidth=function(pWidth){vMonthColWidth=pWidth;};
@@ -461,7 +469,9 @@ JSGantt.GanttChart=function(pDiv, pFormat)
 	this.getDateInputFormat=function(){return vDateInputFormat;};
 	this.getDateTaskTableDisplayFormat=function(){return vDateTaskTableDisplayFormat;};
 	this.getDateTaskDisplayFormat=function(){return vDateTaskDisplayFormat;};
-	this.getHourMajorDateDisplayFormat=function(){return vHourMajorDateDisplayFormat;};
+	this.getMinuteMajorDateDisplayFormat=function(){return vMinuteMajorDateDisplayFormat;};
+	this.getMinuteMinorDateDisplayFormat=function(){return vMinuteMinorDateDisplayFormat;};
+    this.getHourMajorDateDisplayFormat=function(){return vHourMajorDateDisplayFormat;};
 	this.getHourMinorDateDisplayFormat=function(){return vHourMinorDateDisplayFormat;};
 	this.getDayMajorDateDisplayFormat=function(){return vDayMajorDateDisplayFormat;};
 	this.getDayMinorDateDisplayFormat=function(){return vDayMinorDateDisplayFormat;};
@@ -474,7 +484,8 @@ JSGantt.GanttChart=function(pDiv, pFormat)
 	this.getCaptionType=function(){return vCaptionType;};
 	this.getMinGpLen=function(){return vMinGpLen;};
 	this.getScrollTo=function(){return vScrollTo;};
-	this.getHourColWidth=function(){return vHourColWidth;};
+	this.getMinuteColWidth=function(){return vMinuteColWidth;};
+    this.getHourColWidth=function(){return vHourColWidth;};
 	this.getDayColWidth=function(){return vDayColWidth;};
 	this.getWeekColWidth=function(){return vWeekColWidth;};
 	this.getMonthColWidth=function(){return vMonthColWidth;};
@@ -746,6 +757,7 @@ JSGantt.GanttChart=function(pDiv, pFormat)
 			else if(vFormat=='month') vColWidth=vMonthColWidth;
 			else if(vFormat=='quarter') vColWidth=vQuarterColWidth;
 			else if(vFormat=='hour') vColWidth=vHourColWidth;
+            else if(vFormat=='minute') vColWidth=vMinuteColWidth;
 
 			// DRAW the Left-side of the chart (names, resources, comp%)
 			var vLeftHeader=document.createDocumentFragment();
@@ -868,12 +880,16 @@ JSGantt.GanttChart=function(pDiv, pFormat)
 			vTmpRow=this.newNode(vTmpTBody, 'tr');
 
 			vTmpDate.setFullYear(vMinDate.getFullYear(), vMinDate.getMonth(), vMinDate.getDate());
-			if(vFormat=='hour')vTmpDate.setHours(vMinDate.getHours());
-			else vTmpDate.setHours(0);
-			vTmpDate.setMinutes(0);
+			if(vFormat=='hour' || vFormat=='minute')vTmpDate.setHours(vMinDate.getHours());
+            else vTmpDate.setHours(0);
+
+            vTmpDate.setMinutes(0);
 			vTmpDate.setSeconds(0);
 			vTmpDate.setMilliseconds(0);
 
+            if(vFormat=='minute')vTmpDate.setMinutes(vMinDate.getMinutes());
+            
+			
 			var vColSpan=1;
 			// Major Date Header
 			while(vTmpDate.getTime()<=vMaxDate.getTime())
@@ -924,6 +940,30 @@ JSGantt.GanttChart=function(pDiv, pFormat)
 					this.newNode(vTmpCell, 'div', null, null, JSGantt.formatDateStr(vTmpDate,vHourMajorDateDisplayFormat,vLangs[vLang]), vColWidth*vColSpan);
 					vTmpDate.setHours(0);
 					vTmpDate.setDate(vTmpDate.getDate()+1);
+				}else if(vFormat=='minute')
+				{
+					vColSpan=(60-vTmpDate.getMinutes());
+					if (vTmpDate.getFullYear()!=vMaxDate.getFullYear() ||
+						vTmpDate.getMonth()!=vMaxDate.getMonth() ||
+						vTmpDate.getDate()!=vMaxDate.getDate() ||
+                        vTmpDate.getHours()!=vMaxDate.getHours()
+                       ) {
+                        //how many hours we need to span
+                        var hrs = (vMaxDate.getTime() - vTmpDate.getTime())/3600000;
+                        hrs +=  vMaxDate.getHours()-vTmpDate.getHours();
+                        hrs = Math.floor(hrs);
+                        
+                        vColSpan=vColSpan*hrs + (59-vMaxDate.getMinutes());
+                    }
+                    
+					vTmpCell=this.newNode(vTmpRow, 'td', null, vHeaderCellClass, null, null, null, null, vColSpan);
+					
+                    vCellContents+=JSGantt.formatDateStr(vTmpDate,vMinuteMajorDateDisplayFormat,vLangs[vLang])
+                    vCellContents+=' - ' +JSGantt.formatDateStr(vMaxDate, vMinuteMajorDateDisplayFormat,vLangs[vLang]);
+
+                    this.newNode(vTmpCell, 'div', null, null, vCellContents, vColWidth*vColSpan);
+					vTmpDate.setMinutes(0);
+					vTmpDate.setDate(vTmpDate.getDate()+1);
 				}
 			}
 
@@ -931,7 +971,8 @@ JSGantt.GanttChart=function(pDiv, pFormat)
 
 			// Minor Date header and Cell Rows
 			vTmpDate.setFullYear(vMinDate.getFullYear(), vMinDate.getMonth(), vMinDate.getDate(), vMinDate.getHours());
-			if(vFormat=='hour')vTmpDate.setHours(vMinDate.getHours());
+			if(vFormat=='hour' || vFormat =='minute')vTmpDate.setHours(vMinDate.getHours());
+            if(vFormat=='minute')vTmpDate.setMinutes(vMinDate.getMinutes());
 			vNumCols=0;
 
 			while(vTmpDate.getTime()<=vMaxDate.getTime())
@@ -1010,6 +1051,28 @@ JSGantt.GanttChart=function(pDiv, pFormat)
 					}
 					vTmpDate.setHours(0);
 					vTmpDate.setDate(vTmpDate.getDate()+1);
+				}else if(vFormat=='minute')
+				{
+                    
+                    
+                    for (hr = vTmpDate.getHours(); hr <= vMaxDate.getHours(); hr++){
+                        
+                        for(i=vTmpDate.getMinutes();i<60;i++)
+                        {
+                            vTmpDate.setMinutes(i);//works around daylight savings but may look a little odd on days where the clock goes forward
+                            if(vTmpDate<=vMaxDate)
+                            {
+                                vTmpCell=this.newNode(vTmpRow, 'td', null, vHeaderCellClass);
+                                this.newNode(vTmpCell, 'div', null, null, JSGantt.formatDateStr(vTmpDate,vMinuteMinorDateDisplayFormat,vLangs[vLang]), vColWidth);
+                                vNumCols++;
+                            }
+                        }
+                        vTmpDate.setHours(vTmpDate.getHours()+1);
+                        vTmpDate.setMinutes(0);
+                    }
+                    
+				//	vTmpDate.setMinutes(0);
+				//	vTmpDate.setDate(vTmpDate.getDate()+1);
 				}
 			}
 			vDateRow=vTmpRow;
@@ -1263,9 +1326,12 @@ JSGantt.GanttChart=function(pDiv, pFormat)
 		{
 			var vTmpDiv=this.newNode(vOutput, 'div', null, 'gselector', vLangs[vLang]['format']+':');
 
-			if (vFormatArr.join().toLowerCase().indexOf('hour')!=-1)
-				JSGantt.addFormatListeners(this, 'hour', this.newNode(vTmpDiv, 'span', vDivId+'formathour'+pPos, 'gformlabel'+((vFormat=='hour')?' gselected':''), vLangs[vLang]['hour']));
+            if (vFormatArr.join().toLowerCase().indexOf('minute')!=-1)
+				JSGantt.addFormatListeners(this, 'minute', this.newNode(vTmpDiv, 'span', vDivId+'formatminute'+pPos, 'gformlabel'+((vFormat=='minute')?' gselected':''), vLangs[vLang]['minute']));
 
+			if (vFormatArr.join().toLowerCase().indexOf('hour')!=-1)
+				JSGantt.addFormatListeners(this, 'hour', this.newNode(vTmpDiv, 'span', vDivId+'formathour'+pPos, 'gformlabel'+((vFormat=='hour')?' gselected':''), vLangs[vLang]['hour']));            
+            
 			if (vFormatArr.join().toLowerCase().indexOf('day')!=-1)
 				JSGantt.addFormatListeners(this, 'day', this.newNode(vTmpDiv, 'span', vDivId+'formatday'+pPos, 'gformlabel'+((vFormat=='day')?' gselected':''), vLangs[vLang]['day']));
 
@@ -1654,8 +1720,8 @@ JSGantt.getOffset=function(pStartDate, pEndDate, pColWidth, pFormat)
 	var curTaskStart=new Date(pStartDate.getTime());
 	var curTaskEnd=new Date(pEndDate.getTime());
 	var vTaskRightPx=0;
-	var tmpTaskStart=Date.UTC(curTaskStart.getFullYear(), curTaskStart.getMonth(), curTaskStart.getDate(), curTaskStart.getHours(), 0, 0);
-	var tmpTaskEnd=Date.UTC(curTaskEnd.getFullYear(), curTaskEnd.getMonth(), curTaskEnd.getDate(), curTaskEnd.getHours(), 0, 0);
+	var tmpTaskStart=Date.UTC(curTaskStart.getFullYear(), curTaskStart.getMonth(), curTaskStart.getDate(), curTaskStart.getHours(), curTaskStart.getMinutes(), 0);
+	var tmpTaskEnd=Date.UTC(curTaskEnd.getFullYear(), curTaskEnd.getMonth(), curTaskEnd.getDate(), curTaskEnd.getHours(), curTaskEnd.getMinutes(), 0);
 
 	var vTaskRight=(tmpTaskEnd-tmpTaskStart)/3600000; // Length of task in hours
 
@@ -1691,6 +1757,14 @@ JSGantt.getOffset=function(pStartDate, pEndDate, pColWidth, pFormat)
 		vPosTmpDate=new Date(curTaskEnd.getTime());
 		vPosTmpDate.setMinutes(curTaskStart.getMinutes(), 0);
 		var vMinsCrctn=(curTaskEnd.getTime()-vPosTmpDate.getTime())/(3600000);
+
+		vTaskRightPx=Math.ceil((vTaskRight * (pColWidth+1))+(vMinsCrctn * (pColWidth)));
+	}else if(pFormat=='minute')
+	{
+		// can't just calculate sum because of daylight savings changes
+		//vPosTmpDate=new Date(curTaskEnd.getTime());
+		//vPosTmpDate.setMinutes(curTaskStart.getMinutes(), 0);
+		var vMinsCrctn=(curTaskEnd.getTime()-curTaskStart.getTime())/(60000);
 
 		vTaskRightPx=Math.ceil((vTaskRight * (pColWidth+1))+(vMinsCrctn * (pColWidth)));
 	}
@@ -1878,9 +1952,14 @@ JSGantt.getMinDate=function getMinDate(pList, pFormat)
 		vDate.setHours(vDate.getHours()-1);
 		while(vDate.getHours()%6!=0) vDate.setHours(vDate.getHours()-1);
 	}
+    else if (pFormat=='minute')
+	{
+		vDate.setMinutes(vDate.getMinutes()-1);
+		while(vDate.getMinutes()%6!=0) vDate.setMinutes(vDate.getMinutes()-1);
+	}
 
 	if(pFormat=='hour')vDate.setMinutes(0,0);
-	else vDate.setHours(0,0,0);
+	else if (pFormat != 'minute') vDate.setHours(0,0,0);
 	return(vDate);
 };
 
@@ -1935,6 +2014,13 @@ JSGantt.getMaxDate=function (pList, pFormat)
 		vDate.setHours(vDate.getHours()+1);
 
 		while(vDate.getHours()%6!=5) vDate.setHours(vDate.getHours()+1);
+	}
+    else if (pFormat=='minute')
+	{
+		if(vDate.getMinutes()==0)vDate.setDate(vDate.getDate()+1);
+		vDate.setMinutes(vDate.getMinutes()+1);
+
+		while(vDate.getMinutes()%6!=5) vDate.setMinutes(vDate.getMinutes()+1);
 	}
 	return(vDate);
 };
