@@ -245,8 +245,8 @@ JSGantt.TaskItem=function(pID, pName, pStart, pEnd, pClass, pLink, pMile, pRes, 
 	this.getChildRow=function(){return vChildRow;};
 	this.getListChildRow=function(){return vListChildRow;};
 	this.getGroupSpan=function(){return vGroupSpan;};
-	this.setStart=function(pStart){if(pStart instanceof Date)vStart=pStart;};
-	this.setEnd=function(pEnd){if(pEnd instanceof Date)vEnd=pEnd;};
+	this.setStart=function(pStart){vStart=(pStart instanceof Date)?pStart:JSGantt.parseDateStr(document.createTextNode(pStart).data,vGantt.getDateInputFormat());};
+	this.setEnd=function(pEnd){vEnd  =(pEnd instanceof Date)?pEnd:JSGantt.parseDateStr(document.createTextNode(pEnd).data,vGantt.getDateInputFormat());};
 	this.setGroupMinStart=function(pStart){if(pStart instanceof Date)vGroupMinStart=pStart;};
 	this.setGroupMinEnd=function(pEnd){if(pEnd instanceof Date)vGroupMinEnd=pEnd;};
 	this.setLevel=function(pLevel){vLevel=parseInt(document.createTextNode(pLevel).data);};
@@ -1716,6 +1716,9 @@ JSGantt.getScrollPositions=function() {
 
 JSGantt.getOffset=function(pStartDate, pEndDate, pColWidth, pFormat)
 {
+    //need to adjust offset for border spacing default is 2px but should dynamically load
+    var vBorderWidth = 1;
+    
 	var vMonthDaysArr=new Array(31,28,31,30,31,30,31,31,30,31,30,31);
 	var curTaskStart=new Date(pStartDate.getTime());
 	var curTaskEnd=new Date(pEndDate.getTime());
@@ -1766,7 +1769,9 @@ JSGantt.getOffset=function(pStartDate, pEndDate, pColWidth, pFormat)
 		//vPosTmpDate.setMinutes(curTaskStart.getMinutes(), 0);
 		var vMinsCrctn=(curTaskEnd.getTime()-curTaskStart.getTime())/(60000);
 
-		vTaskRightPx=Math.ceil((vTaskRight * (pColWidth+1))+(vMinsCrctn * (pColWidth)));
+        
+        
+		vTaskRightPx=Math.ceil((vTaskRight * (pColWidth+1))+(vMinsCrctn * (pColWidth)) + ((vMinsCrctn) * vBorderWidth));
 	}
 	return vTaskRightPx;
 };
@@ -1966,7 +1971,7 @@ JSGantt.getMinDate=function getMinDate(pList, pFormat)
 // Used to determine the maximum date of all tasks and set upper bound based on format
 JSGantt.getMaxDate=function (pList, pFormat)
 {
-	var vDate=new Date();
+	var vDate=new Date(0);
 
 	vDate.setTime(pList[0].getEnd().getTime());
 
@@ -2017,11 +2022,14 @@ JSGantt.getMaxDate=function (pList, pFormat)
 	}
     else if (pFormat=='minute')
 	{
-		if(vDate.getMinutes()==0)vDate.setDate(vDate.getDate()+1);
-		vDate.setMinutes(vDate.getMinutes()+1);
+		if(vDate.getHours()==0)vDate.setDate(vDate.getDate()+1);
+		vDate.setHours(vDate.getHours()+1);
 
-		while(vDate.getMinutes()%6!=5) vDate.setMinutes(vDate.getMinutes()+1);
+		while(vDate.getHours()%6!=5) vDate.setHours(vDate.getHours()+1);
+
+		vDate.setMinutes(vDate.getMinutes()+1);
 	}
+    console.log('max date = ' + vDate);
 	return(vDate);
 };
 
