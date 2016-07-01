@@ -720,7 +720,7 @@ JSGantt.GanttChart=function(pDiv, pFormat)
 
 	this.Draw=function()
 	{
-		var vMaxDate=new Date();
+		var vMaxDate=new Date(0);
 		var vMinDate=new Date();
 		var vTmpDate=new Date();
 		var vTaskLeftPx=0;
@@ -750,6 +750,8 @@ JSGantt.GanttChart=function(pDiv, pFormat)
 			// get overall min/max dates plus padding
 			vMinDate=JSGantt.getMinDate(vTaskList, vFormat);
 			vMaxDate=JSGantt.getMaxDate(vTaskList, vFormat);
+            
+            console.log("Min/Max Date:", vMinDate, " to ", vMaxDate);
 
 			// Calculate chart width variables.
 			if(vFormat=='day') vColWidth=vDayColWidth;
@@ -880,15 +882,16 @@ JSGantt.GanttChart=function(pDiv, pFormat)
 			vTmpRow=this.newNode(vTmpTBody, 'tr');
 
 			vTmpDate.setFullYear(vMinDate.getFullYear(), vMinDate.getMonth(), vMinDate.getDate());
-			if(vFormat=='hour' || vFormat=='minute')vTmpDate.setHours(vMinDate.getHours());
-            else vTmpDate.setHours(0);
-
             vTmpDate.setMinutes(0);
 			vTmpDate.setSeconds(0);
 			vTmpDate.setMilliseconds(0);
+            
+            if(vFormat=='hour' || vFormat=='minute')vTmpDate.setHours(vMinDate.getHours());
+            else { vTmpDate.setHours(0); }
 
             if(vFormat=='minute')vTmpDate.setMinutes(vMinDate.getMinutes());
             
+            console.log("Min Date ",vTmpDate, " --- Max Date ", vMaxDate);
 			
 			var vColSpan=1;
 			// Major Date Header
@@ -958,12 +961,12 @@ JSGantt.GanttChart=function(pDiv, pFormat)
                     
 					vTmpCell=this.newNode(vTmpRow, 'td', null, vHeaderCellClass, null, null, null, null, vColSpan);
 					
-                    vCellContents+=JSGantt.formatDateStr(vTmpDate,vMinuteMajorDateDisplayFormat,vLangs[vLang])
-                    vCellContents+=' - ' +JSGantt.formatDateStr(vMaxDate, vMinuteMajorDateDisplayFormat,vLangs[vLang]);
+                    vCellContents+=JSGantt.formatDateStr(vTmpDate,vMinuteMajorDateDisplayFormat,vLangs[vLang]);
+                    //vCellContents+=' - ' +JSGantt.formatDateStr(vMaxDate, vMinuteMajorDateDisplayFormat,vLangs[vLang]);
 
                     this.newNode(vTmpCell, 'div', null, null, vCellContents, vColWidth*vColSpan);
 					vTmpDate.setMinutes(0);
-					vTmpDate.setDate(vTmpDate.getDate()+1);
+					vTmpDate.setHours(vTmpDate.getHours()+1);
 				}
 			}
 
@@ -1053,9 +1056,14 @@ JSGantt.GanttChart=function(pDiv, pFormat)
 					vTmpDate.setDate(vTmpDate.getDate()+1);
 				}else if(vFormat=='minute')
 				{
+                    var max = vMaxDate.getHours();
                     
+                    if ( vTmpDate.getDay() != vMaxDate.getDay() ||
+                          vTmpDate.getMonth() != vMaxDate.getMonth() ||
+                            vTmpDate.getYear() != vMaxDate.getYear())
+                        max = 24;
                     
-                    for (hr = vTmpDate.getHours(); hr <= vMaxDate.getHours(); hr++){
+                    for (hr = vTmpDate.getHours(); hr <= max; hr++){
                         
                         for(i=vTmpDate.getMinutes();i<60;i++)
                         {
@@ -1780,7 +1788,7 @@ JSGantt.getOffset=function(pStartDate, pEndDate, pColWidth, pFormat)
 JSGantt.processRows=function(pList, pID, pRow, pLevel, pOpen, pUseSort)
 {
 	var vMinDate=new Date();
-	var vMaxDate=new Date();
+	var vMaxDate=new Date(0);
 	var vVisible=pOpen;
 	var vCurItem=null;
 	var vCompSum=0;
@@ -2022,12 +2030,8 @@ JSGantt.getMaxDate=function (pList, pFormat)
 	}
     else if (pFormat=='minute')
 	{
-		if(vDate.getHours()==0)vDate.setDate(vDate.getDate()+1);
-		vDate.setHours(vDate.getHours()+1);
-
-		while(vDate.getHours()%6!=5) vDate.setHours(vDate.getHours()+1);
-
-		vDate.setMinutes(vDate.getMinutes()+1);
+        //add 2 minutes of padding to the max time
+		vDate.setMinutes(vDate.getMinutes()+2);
 	}
     console.log('max date = ' + vDate);
 	return(vDate);
